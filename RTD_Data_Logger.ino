@@ -34,11 +34,11 @@
 #define SDErrLedPin     23    // LED to illuminate when error with SD card
 
 // RTD to Digital Objects
-Adafruit_MAX31865 max_0 = Adafruit_MAX31865(10);
-Adafruit_MAX31865 max_1 = Adafruit_MAX31865(9);
+Adafruit_MAX31865 max_0 = Adafruit_MAX31865(6);
+Adafruit_MAX31865 max_1 = Adafruit_MAX31865(7);
 Adafruit_MAX31865 max_2 = Adafruit_MAX31865(8);
-Adafruit_MAX31865 max_3 = Adafruit_MAX31865(7);
-Adafruit_MAX31865 max_4 = Adafruit_MAX31865(6);
+Adafruit_MAX31865 max_3 = Adafruit_MAX31865(9);
+Adafruit_MAX31865 max_4 = Adafruit_MAX31865(10);
 Adafruit_MAX31865 max_5 = Adafruit_MAX31865(1);
 Adafruit_MAX31865 max_6 = Adafruit_MAX31865(2);
 Adafruit_MAX31865 max_7 = Adafruit_MAX31865(3);
