@@ -1,9 +1,8 @@
 // Edit 'Config.h' and then upload this file.
 // No need to edit anything in this file
 
-// rev B - WTN
-// Very quick addition of I2C OLED screen for monitoring channel 1
-// 03/06/21
+// 15/07/2021
+// WTN
 
 // Libraries
 #include <SD.h>
