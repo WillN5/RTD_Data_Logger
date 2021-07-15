@@ -1,7 +1,7 @@
 # RTD_Data_Logger
 10 Channel PT100 Data Logger
 
-4 wire PT100 measurement
+4 wire PT100 measurement \n
 10 Hz sample rate per channel
 10 channels sequential read
 Log to SD card
