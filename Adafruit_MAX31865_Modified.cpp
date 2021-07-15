@@ -34,9 +34,9 @@
 /**************************************************************************/
 //
 Adafruit_MAX31865_Modified::Adafruit_MAX31865_Modified(int8_t spi_cs, int8_t spi_mosi,
-                                     int8_t spi_miso, int8_t spi_clk) {
-  spi_dev = Adafruit_SPIDevice(spi_cs, spi_clk, spi_miso, spi_mosi, 1000000);
-}
+                                     int8_t spi_miso, int8_t spi_clk)
+    : spi_dev(spi_cs, spi_clk, spi_miso, spi_mosi, 1000000,
+              SPI_BITORDER_MSBFIRST, SPI_MODE1) {}
 
 /**************************************************************************/
 /*!
@@ -44,10 +44,8 @@ Adafruit_MAX31865_Modified::Adafruit_MAX31865_Modified(int8_t spi_cs, int8_t spi
     @param spi_cs the SPI CS pin to use along with the default SPI device
 */
 /**************************************************************************/
-Adafruit_MAX31865_Modified::Adafruit_MAX31865_Modified(int8_t spi_cs) {
-  spi_dev =
-      Adafruit_SPIDevice(spi_cs, 1000000, SPI_BITORDER_MSBFIRST, SPI_MODE1);
-}
+Adafruit_MAX31865_Modified::Adafruit_MAX31865_Modified(int8_t spi_cs)
+    : spi_dev(spi_cs, 1000000, SPI_BITORDER_MSBFIRST, SPI_MODE1) {}
 
 /**************************************************************************/
 /*!
@@ -61,9 +59,9 @@ bool Adafruit_MAX31865_Modified::begin(max31865_numwires_t wires) {
   spi_dev.begin();
 
   setWires(wires);
-  enableBias(false);
+  enableBias(true);
   autoConvert(true);
-  enable50Hz(true);
+  // enable50Hz(true);
   clearFault();
 
   // Serial.print("config: ");
@@ -179,13 +177,14 @@ float Adafruit_MAX31865_Modified::temperature(float RTDnominal, float refResisto
 
   // modified
   clearFault();
-  enableBias(true);
-  delay(50);
+  // enableBias(true);
+  // delay(10);
   rtd = readRegister16(MAX31856_RTDMSB_REG);
+  // enableBias(false);
 
 //  Serial.println(rtd);
 
-  if(rtd >= 65534 || rtd <= 1){
+  if(rtd >= 63760 || rtd <= 1){
     return -999;
   }
   // remove fault

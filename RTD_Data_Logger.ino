@@ -10,7 +10,7 @@
 #include <SD_t3.h>
 #include <TimeLib.h>
 #include "Config.h"
-#include <Adafruit_MAX31865.h>
+#include "Adafruit_MAX31865_Modified.h"
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 
@@ -24,8 +24,8 @@
 
 // Input Pin Definitions
 #define button1Pin      37    // Button to start/stop sampling
-#define button2Pin      36    // Button for ...
-#define button3Pin      35    // Button for ...
+#define button2Pin      35    // Button for scrolling right
+#define button3Pin      36    // Button for scrolling left
 #define button4Pin      34    // Button for ...
 #define button5Pin      33    // Button for ...
 
@@ -34,16 +34,16 @@
 #define SDErrLedPin     23    // LED to illuminate when error with SD card
 
 // RTD to Digital Objects
-Adafruit_MAX31865 max_0 = Adafruit_MAX31865(6);
-Adafruit_MAX31865 max_1 = Adafruit_MAX31865(7);
-Adafruit_MAX31865 max_2 = Adafruit_MAX31865(8);
-Adafruit_MAX31865 max_3 = Adafruit_MAX31865(9);
-Adafruit_MAX31865 max_4 = Adafruit_MAX31865(10);
-Adafruit_MAX31865 max_5 = Adafruit_MAX31865(1);
-Adafruit_MAX31865 max_6 = Adafruit_MAX31865(2);
-Adafruit_MAX31865 max_7 = Adafruit_MAX31865(3);
-Adafruit_MAX31865 max_8 = Adafruit_MAX31865(4);
-Adafruit_MAX31865 max_9 = Adafruit_MAX31865(5);
+Adafruit_MAX31865_Modified max_0 = Adafruit_MAX31865_Modified(6);
+Adafruit_MAX31865_Modified max_1 = Adafruit_MAX31865_Modified(7);
+Adafruit_MAX31865_Modified max_2 = Adafruit_MAX31865_Modified(8);
+Adafruit_MAX31865_Modified max_3 = Adafruit_MAX31865_Modified(9);
+Adafruit_MAX31865_Modified max_4 = Adafruit_MAX31865_Modified(10);
+Adafruit_MAX31865_Modified max_5 = Adafruit_MAX31865_Modified(1);
+Adafruit_MAX31865_Modified max_6 = Adafruit_MAX31865_Modified(2);
+Adafruit_MAX31865_Modified max_7 = Adafruit_MAX31865_Modified(3);
+Adafruit_MAX31865_Modified max_8 = Adafruit_MAX31865_Modified(4);
+Adafruit_MAX31865_Modified max_9 = Adafruit_MAX31865_Modified(5);
 
 // Display object
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);   // 128x64 OLED
@@ -60,9 +60,8 @@ File logfile;
 
 void setup() {
 
-  // Serial configurations
   setSyncProvider(getTeensy3Time);  // Set the Time library to use Teensy 3.0's RTC to keep time
-  Serial.begin(115200);             // Used for real time monitoring over USB
+//  Serial.begin(115200);             // Used for real time monitoring over USB
 
   // init display
   display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS);
@@ -97,15 +96,15 @@ void setup() {
   // Take dummy sample
   float temp;
   temp = max_0.temperature(RNOMINAL, RREF);
-//  temp = max_1.temperature(RNOMINAL, RREF);
-//  temp = max_2.temperature(RNOMINAL, RREF);
-//  temp = max_3.temperature(RNOMINAL, RREF);
-//  temp = max_4.temperature(RNOMINAL, RREF);
-//  temp = max_5.temperature(RNOMINAL, RREF);
-//  temp = max_6.temperature(RNOMINAL, RREF);
-//  temp = max_7.temperature(RNOMINAL, RREF);
-//  temp = max_8.temperature(RNOMINAL, RREF);
-//  temp = max_9.temperature(RNOMINAL, RREF);
+  temp = max_1.temperature(RNOMINAL, RREF);
+  temp = max_2.temperature(RNOMINAL, RREF);
+  temp = max_3.temperature(RNOMINAL, RREF);
+  temp = max_4.temperature(RNOMINAL, RREF);
+  temp = max_5.temperature(RNOMINAL, RREF);
+  temp = max_6.temperature(RNOMINAL, RREF);
+  temp = max_7.temperature(RNOMINAL, RREF);
+  temp = max_8.temperature(RNOMINAL, RREF);
+  temp = max_9.temperature(RNOMINAL, RREF);
 
   SdFile::dateTimeCallback(dateTime);
 }
@@ -252,14 +251,14 @@ void loop() {
         for (byte i = 0; i < 10; i++) {
           if (i == 9) {
             // If last temperature, print new line
-            if (T[i] == -999) {
+            if ((T[i] == -999) || ((T[i] > 1213.8) && (T[i] < 1214.0))) {
               logfile.println('-');
             } else {
               logfile.println(T[i]);
             }
           } else {
             // Else print comma separated on single line
-            if (T[i] == -999) {
+            if ((T[i] == -999) || ((T[i] > 1213.8) && (T[i] < 1214.0))) {
               logfile.print('-');
             } else {
               logfile.print(T[i]);
@@ -280,39 +279,39 @@ void loop() {
 
         // Sample temperatures
       sampleTemperature(T, max_0, 0);
-//      sampleTemperature(T, max_1, 1);
-//      sampleTemperature(T, max_2, 2);
-//      sampleTemperature(T, max_3, 3);
-//      sampleTemperature(T, max_4, 4);
-//      sampleTemperature(T, max_5, 5);
-//      sampleTemperature(T, max_6, 6);
-//      sampleTemperature(T, max_7, 7);
-//      sampleTemperature(T, max_8, 8);
-//      sampleTemperature(T, max_9, 9);
+      sampleTemperature(T, max_1, 1);
+      sampleTemperature(T, max_2, 2);
+      sampleTemperature(T, max_3, 3);
+      sampleTemperature(T, max_4, 4);
+      sampleTemperature(T, max_5, 5);
+      sampleTemperature(T, max_6, 6);
+      sampleTemperature(T, max_7, 7);
+      sampleTemperature(T, max_8, 8);
+      sampleTemperature(T, max_9, 9);
 
       // update display with new temperatures
       updateDisplay(T,samplingState,filename,error,screenCounter);
 
-      // Serial print data - stream values even if not logging to SD
-      Serial.printf("%.2f,", dt);
-      for (byte i = 0; i < 10; i++) {
-        if (i == 9) {
-          // If last temperature, print new line
-          if (T[i] == -999) {
-            Serial.println('-');
-          } else {
-            Serial.println(T[i]);
-          }
-        } else {
-          // Else print comma separated on single line
-          if (T[i] == -999) {
-            Serial.print('-');
-          } else {
-            Serial.print(T[i]);
-          }
-          Serial.print(",");
-        }
-      }
+//      // Serial print data - stream values even if not logging to SD
+//      Serial.printf("%.2f,", dt);
+//      for (byte i = 0; i < 10; i++) {
+//        if (i == 9) {
+//          // If last temperature, print new line
+//          if (T[i] == -999) {
+//            Serial.println('-');
+//          } else {
+//            Serial.println(T[i]);
+//          }
+//        } else {
+//          // Else print comma separated on single line
+//          if (T[i] == -999) {
+//            Serial.print('-');
+//          } else {
+//            Serial.print(T[i]);
+//          }
+//          Serial.print(",");
+//        }
+//      }
     } // end of (millis - timeOld)
 
     // If sampling has ended, and we were previously sampling
@@ -341,29 +340,29 @@ void errorCheckSDPresent(byte *errorP, SDClass &SD) {
   }
 }
 
-void errorDisplay(byte *errorP) {
-  if (SERIAL_DEBUG) {
-    Serial.println(*errorP, BIN);
-  }
-  if (*errorP) {
-    digitalWrite(SDErrLedPin, LOW);
-  } else {
-    digitalWrite(SDErrLedPin, HIGH);
-  }
-
-  if (SERIAL_DEBUG) {
-    if ((*errorP & 0b100) >> 2) {
-      Serial.println("SD error: No SD card detected");
-    }
-    if ((*errorP & 0b010) >> 1) {
-      Serial.println("SD error: No unique filename available");
-    }
-    if (*errorP & 0b001) {
-      Serial.println("SD error: File couldn't be created");
-    }
-  }
-
-}
+//void errorDisplay(byte *errorP) {
+//  if (SERIAL_DEBUG) {
+//    Serial.println(*errorP, BIN);
+//  }
+//  if (*errorP) {
+//    digitalWrite(SDErrLedPin, LOW);
+//  } else {
+//    digitalWrite(SDErrLedPin, HIGH);
+//  }
+//
+//  if (SERIAL_DEBUG) {
+//    if ((*errorP & 0b100) >> 2) {
+//      Serial.println("SD error: No SD card detected");
+//    }
+//    if ((*errorP & 0b010) >> 1) {
+//      Serial.println("SD error: No unique filename available");
+//    }
+//    if (*errorP & 0b001) {
+//      Serial.println("SD error: File couldn't be created");
+//    }
+//  }
+//
+//}
 
 void generateFilename(char filename[], char *number1, char *number2, byte *errorP) {
   int i = 1;
@@ -381,7 +380,7 @@ void generateFilename(char filename[], char *number1, char *number2, byte *error
   }
 }
 
-void sampleTemperature(float T[], Adafruit_MAX31865 &maxN, byte idx) {
+void sampleTemperature(float T[], Adafruit_MAX31865_Modified &maxN, byte idx) {
   float temp = maxN.temperature(RNOMINAL, RREF);
   if (temp != -999 & (unit == 'K' || unit == 'k')) {
     temp += 273.15;
@@ -427,7 +426,8 @@ void updateDisplay(float T[], bool samplingState, char filename[], byte err, int
   // clear non-temperature readings
   // 31.13 or 1261.94 appear when no PT100 attached
   for(int i=0; i<10; i++){
-    if(((T[i] > 31.11) && (T[i] < 31.15)) || ((T[i] > 1261.92) && (T[i] < 1261.96))){
+    // if(((T[i] > 31.11) && (T[i] < 31.15)) || ((T[i] > 1261.92) && (T[i] < 1261.96))){
+    if((T[i] == -999) || ((T[i] > 1213.8) && (T[i] < 1214.0))){
       T[i] = 0.0f;
     }
   }
