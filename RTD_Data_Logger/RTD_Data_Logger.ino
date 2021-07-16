@@ -210,7 +210,7 @@ void loop() {
       if (!samplingStateOld) {
         samplingStateOld = 1;
         // Turn sample LED on
-        digitalWrite(sampleLedPin, HIGH);
+        analogWrite(sampleLedPin, 50);
         // Generate unique filename and update error
         if (!error) {
           generateFilename(filename, &filename[3], &filename[4], &error);
@@ -322,7 +322,7 @@ void loop() {
       logfile.println("End of Test \n");
       logfile.flush();
       logfile.close();
-      digitalWrite(sampleLedPin, LOW);
+      analogWrite(sampleLedPin, 0);
       endOfTestBlink();
     }
   } // end of while(1)
@@ -389,9 +389,9 @@ void sampleTemperature(float T[], Adafruit_MAX31865_Modified &maxN, byte idx) {
 
 void endOfTestBlink() {
   for (int i = 0; i < 10; i++) {
-    digitalWrite(sampleLedPin, HIGH);
+    analogWrite(sampleLedPin, 10);
     delay(100);
-    digitalWrite(sampleLedPin, LOW);
+    analogWrite(sampleLedPin, 0);
     delay(50);
   }
 }

@@ -15,12 +15,6 @@
 #define CH9_WIRE_CONFIG     MAX31865_4WIRE    // Temperautre channel 9
 #define CH10_WIRE_CONFIG    MAX31865_4WIRE    // Temperautre channel 10
 
-
-
-// Test length in seconds (test can be ended prematurely using button)
-#define testLength          604800
-
-
 // Sampling frequency in Hz - 10 Hz is fastest sample speed
 #define samplingFrequency   10
 
