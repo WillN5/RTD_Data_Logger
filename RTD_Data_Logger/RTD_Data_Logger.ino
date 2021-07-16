@@ -199,9 +199,9 @@ void loop() {
       screenCounter = 10;
     }
 
-   if (sampleCounter > testLength * samplingFrequency) {
-     samplingState = 0;
-   }
+   // if (sampleCounter > testLength * samplingFrequency) {
+   //   samplingState = 0;
+   // }
 
     // If sampling is true, log to sd card
     if (samplingState) {
@@ -210,7 +210,7 @@ void loop() {
       if (!samplingStateOld) {
         samplingStateOld = 1;
         // Turn sample LED on
-        analogWrite(sampleLedPin, 50);
+        analogWrite(sampleLedPin, 10);
         // Generate unique filename and update error
         if (!error) {
           generateFilename(filename, &filename[3], &filename[4], &error);
@@ -389,7 +389,7 @@ void sampleTemperature(float T[], Adafruit_MAX31865_Modified &maxN, byte idx) {
 
 void endOfTestBlink() {
   for (int i = 0; i < 10; i++) {
-    analogWrite(sampleLedPin, 10);
+    analogWrite(sampleLedPin, 255);
     delay(100);
     analogWrite(sampleLedPin, 0);
     delay(50);
