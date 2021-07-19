@@ -60,7 +60,7 @@ File logfile;
 void setup() {
 
   setSyncProvider(getTeensy3Time);  // Set the Time library to use Teensy 3.0's RTC to keep time
-//  Serial.begin(115200);             // Used for real time monitoring over USB
+  //  Serial.begin(115200);             // Used for real time monitoring over USB
 
   // init display
   display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS);
@@ -128,7 +128,7 @@ void loop() {
   bool button3StateOld = 0;
   long timeOld = -1000000;
   unsigned long samplePeriod = 1000 / samplingFrequency;
-  float dt = 0;
+  float dt = 0.00f;
   unsigned long startTime = 0;
   unsigned long sampleCounter = 0;
   int screenCounter = 10; // start on screen which shows all temperatures. 0-9 show channels 1-10 individually
@@ -145,7 +145,7 @@ void loop() {
     // Only check for SD error before sampling - during sampling throws timings off?
     if (!samplingState) {
       errorCheckSDPresent(&error, SD);
-//      errorDisplay(&error);
+      //      errorDisplay(&error);
     }
 
     // Check if button has been pressed
@@ -159,10 +159,15 @@ void loop() {
       button1State = !digitalRead(button1Pin);
       // If button 1 still pressed, accept valid button press
       if (button1State) {
-        samplingState = !samplingState;
+        if (!samplingState && !error) {
+          samplingState = 1;
+        } else if (samplingState) {
+          samplingState = 0;
+        }
+        // samplingState = !samplingState;
         button1StateOld = 1;
       }
-    }else if (!button1State) {
+    } else if (!button1State) {
       button1StateOld = 0;
     }
 
@@ -175,7 +180,7 @@ void loop() {
         screenCounter++;
         button2StateOld = 1;
       }
-    }else if (!button2State) {
+    } else if (!button2State) {
       button2StateOld = 0;
     }
 
@@ -188,95 +193,100 @@ void loop() {
         screenCounter--;
         button3StateOld = 1;
       }
-    }else if (!button3State) {
+    } else if (!button3State) {
       button3StateOld = 0;
     }
 
     // wrap around screens if counter > 10 or < 0
-    if(screenCounter > 10){
+    if (screenCounter > 10) {
       screenCounter = 0;
-    }else if(screenCounter < 0){
+    } else if (screenCounter < 0) {
       screenCounter = 10;
     }
 
-   // if (sampleCounter > testLength * samplingFrequency) {
-   //   samplingState = 0;
-   // }
+    // if (sampleCounter > testLength * samplingFrequency) {
+    //   samplingState = 0;
+    // }
 
-    // If sampling is true, log to sd card
-    if (samplingState) {
 
-      // If first time through loop, generate unique file
-      if (!samplingStateOld) {
-        samplingStateOld = 1;
-        // Turn sample LED on
-        analogWrite(sampleLedPin, 10);
-        // Generate unique filename and update error
-        if (!error) {
-          generateFilename(filename, &filename[3], &filename[4], &error);
-        }
-        // Open file on SD
-        if (!error) {
-          logfile = SD.open(filename, FILE_WRITE);
-        }
-        if (!error && !logfile) {
-          // Failed to create file error
-          error = error | 0b001;
-        } else {
-          // No error, file created
-          error = error & 0b110;
-        }
 
-        if (!error) {
-          // Generate header with time stamp - SD
-          logfile.println("10 Channel PT100 Data Logger");
-          logfile.println(String(day()) + "/" + String(month()) + "/" + String(year()));
-          logfile.printf("%02d:%02d:%02d\n", hour(), minute(), second());
-          logfile.println();
-          logfile.println();
-          if (unit == 'K' || unit == 'k') {
-            logfile.println("Time (s), T1 (K), T2 (K),  T3 (K), T4 (K), T5 (K), T6 (K), T7 (K), T8 (K), T9 (K), T10 (K)");
-          } else {
-            logfile.println("Time (s), T1 (C), T2 (C),  T3 (C), T4 (C), T5 (C), T6 (C), T7 (C), T8 (C), T9 (C), T10 (C)");
+    if (millis() - timeOld >= samplePeriod) {
+
+
+
+      // If sampling is true, log to sd card
+      if (samplingState) {
+
+        // If first time through loop, generate unique file
+        if (!samplingStateOld) {
+          samplingStateOld = 1;
+          // Turn sample LED on
+          analogWrite(sampleLedPin, 20);
+          // Generate unique filename and update error
+          if (!error) {
+            generateFilename(filename, &filename[3], &filename[4], &error);
           }
+          // Open file on SD
+          if (!error) {
+            logfile = SD.open(filename, FILE_WRITE);
+          }
+          if (!error && !logfile) {
+            // Failed to create file error
+            error = error | 0b001;
+          } else {
+            // No error, file created
+            error = error & 0b110;
+          }
+
+          if (!error) {
+            // Generate header with time stamp - SD
+            logfile.println("10 Channel PT100 Data Logger");
+            logfile.println(String(day()) + "/" + String(month()) + "/" + String(year()));
+            logfile.printf("%02d:%02d:%02d\n", hour(), minute(), second());
+            logfile.println();
+            logfile.println();
+            if (unit == 'K' || unit == 'k') {
+              logfile.println("Time (s), T1 (K), T2 (K),  T3 (K), T4 (K), T5 (K), T6 (K), T7 (K), T8 (K), T9 (K), T10 (K)");
+            } else {
+              logfile.println("Time (s), T1 (C), T2 (C),  T3 (C), T4 (C), T5 (C), T6 (C), T7 (C), T8 (C), T9 (C), T10 (C)");
+            }
+            logfile.flush();
+            // dt = 0.00f;
+          }
+          startTime = millis();
+        } // end of first pass
+
+        // If no error, write to SD
+        if (!error) {
+          dt = millis() - startTime;
+          dt /= 1000;
+          logfile.printf("%.2f,", dt);
+          for (byte i = 0; i < 10; i++) {
+            if (i == 9) {
+              // If last temperature, print new line
+              if ((T[i] == -999) || ((T[i] > 1213.8) && (T[i] < 1214.0))) {
+                logfile.println('-');
+              } else {
+                logfile.println(T[i]);
+              }
+            } else {
+              // Else print comma separated on single line
+              if ((T[i] == -999) || ((T[i] > 1213.8) && (T[i] < 1214.0))) {
+                logfile.print('-');
+              } else {
+                logfile.print(T[i]);
+              }
+              logfile.print(",");
+            }
+          }
+          // commit to SD
           logfile.flush();
         }
-        startTime = millis();
-      } // end of first pass
-
-      // If no error, write to SD
-      if (!error) {
-        logfile.printf("%.2f,", dt);
-        for (byte i = 0; i < 10; i++) {
-          if (i == 9) {
-            // If last temperature, print new line
-            if ((T[i] == -999) || ((T[i] > 1213.8) && (T[i] < 1214.0))) {
-              logfile.println('-');
-            } else {
-              logfile.println(T[i]);
-            }
-          } else {
-            // Else print comma separated on single line
-            if ((T[i] == -999) || ((T[i] > 1213.8) && (T[i] < 1214.0))) {
-              logfile.print('-');
-            } else {
-              logfile.print(T[i]);
-            }
-            logfile.print(",");
-          }
-        }
-        // commit to SD
-        logfile.flush();
       }
-    }
 
-    if (millis() - timeOld >= samplePeriod){
-      sampleCounter++;
-      dt = millis() - startTime;
-      dt /= 1000;
       timeOld = millis();
 
-        // Sample temperatures
+      // Sample temperatures
       sampleTemperature(T, max_0, 0);
       sampleTemperature(T, max_1, 1);
       sampleTemperature(T, max_2, 2);
@@ -289,34 +299,35 @@ void loop() {
       sampleTemperature(T, max_9, 9);
 
       // update display with new temperatures
-      updateDisplay(T,samplingState,filename,error,screenCounter);
-
-//      // Serial print data - stream values even if not logging to SD
-//      Serial.printf("%.2f,", dt);
-//      for (byte i = 0; i < 10; i++) {
-//        if (i == 9) {
-//          // If last temperature, print new line
-//          if (T[i] == -999) {
-//            Serial.println('-');
-//          } else {
-//            Serial.println(T[i]);
-//          }
-//        } else {
-//          // Else print comma separated on single line
-//          if (T[i] == -999) {
-//            Serial.print('-');
-//          } else {
-//            Serial.print(T[i]);
-//          }
-//          Serial.print(",");
-//        }
-//      }
+      updateDisplay(T, samplingState, filename, error, screenCounter);
+      // sampleCounter++;
+      
+      //      // Serial print data - stream values even if not logging to SD
+      //      Serial.printf("%.2f,", dt);
+      //      for (byte i = 0; i < 10; i++) {
+      //        if (i == 9) {
+      //          // If last temperature, print new line
+      //          if (T[i] == -999) {
+      //            Serial.println('-');
+      //          } else {
+      //            Serial.println(T[i]);
+      //          }
+      //        } else {
+      //          // Else print comma separated on single line
+      //          if (T[i] == -999) {
+      //            Serial.print('-');
+      //          } else {
+      //            Serial.print(T[i]);
+      //          }
+      //          Serial.print(",");
+      //        }
+      //      }
     } // end of (millis - timeOld)
 
     // If sampling has ended, and we were previously sampling
     if (!samplingState && samplingStateOld) {
       sampleCounter = 0;
-      dt = 0;
+      dt = 0.00f;
       timeOld = -1000000;
       samplingStateOld = 0;
       logfile.println("End of Test \n");
@@ -389,7 +400,7 @@ void sampleTemperature(float T[], Adafruit_MAX31865_Modified &maxN, byte idx) {
 
 void endOfTestBlink() {
   for (int i = 0; i < 10; i++) {
-    analogWrite(sampleLedPin, 255);
+    analogWrite(sampleLedPin, 20);
     delay(100);
     analogWrite(sampleLedPin, 0);
     delay(50);
@@ -420,13 +431,13 @@ void dateTime(uint16_t* date, uint16_t* time)
   *time = FAT_TIME(hour(), minute(), second());
 }
 
-void updateDisplay(float T[], bool samplingState, char filename[], byte err, int screenCounter){
+void updateDisplay(float T[], bool samplingState, char filename[], byte err, int screenCounter) {
 
   // clear non-temperature readings
   // 31.13 or 1261.94 appear when no PT100 attached
-  for(int i=0; i<10; i++){
+  for (int i = 0; i < 10; i++) {
     // if(((T[i] > 31.11) && (T[i] < 31.15)) || ((T[i] > 1261.92) && (T[i] < 1261.96))){
-    if((T[i] == -999) || ((T[i] > 1213.8) && (T[i] < 1214.0))){
+    if ((T[i] == -999) || ((T[i] > 1213.8) && (T[i] < 1214.0))) {
       T[i] = 0.0f;
     }
   }
@@ -434,147 +445,147 @@ void updateDisplay(float T[], bool samplingState, char filename[], byte err, int
   display.clearDisplay();
   display.setTextColor(SSD1306_WHITE);
 
-  if(screenCounter < 10){
+  if (screenCounter < 10) {
     // display individual screens on screens 0-9
     char tBuf[2];
     char sBuf[6];
     char vBuf[8];
-     
+
     // top row - <   T_   >
     display.setTextSize(1);
-    display.setCursor(0,0);
+    display.setCursor(0, 0);
     display.write("<");
-    display.setCursor(55,0);
+    display.setCursor(55, 0);
     display.write("T");
-    sprintf(tBuf,"%i",screenCounter+1);
+    sprintf(tBuf, "%i", screenCounter + 1);
     display.write(tBuf);
-    display.setCursor(122,0);
+    display.setCursor(122, 0);
     display.write(">");
 
     // temperature display
     display.setTextSize(2);
-    display.setCursor(20,25);
-    dtostrf(T[screenCounter],6,2,sBuf);
-    sprintf(vBuf,"%s K",sBuf);
+    display.setCursor(20, 25);
+    dtostrf(T[screenCounter], 6, 2, sBuf);
+    sprintf(vBuf, "%s K", sBuf);
     display.write(vBuf);
 
     // SD card status
     display.setTextSize(1);
-    display.setCursor(0,57);
-//    display.write("SD ");
+    display.setCursor(0, 57);
+    //    display.write("SD ");
     // if SD present, show tick, otherwise show cross
-    if(err){
+    if (err) {
       display.write("No SD!");
-    }else{
+    } else {
       display.write("SD detected");
     }
 
     // if logging, show file name
-    display.setCursor(73,57);
-    if(samplingState && !err){
+    display.setCursor(73, 57);
+    if (samplingState && !err) {
       display.write(filename);
     }
 
     // commit changes
     display.display();
-    
-  }else{
+
+  } else {
     // show all on screen 10
-    
+
     // T1
     char s1[6];
-    dtostrf(T[0],6,2,s1);
+    dtostrf(T[0], 6, 2, s1);
     display.setTextSize(1);
-    display.setCursor(0,0);
+    display.setCursor(0, 0);
     display.write("1: ");
     display.write(s1);
 
     // T2
     char s2[6];
-    dtostrf(T[1],6,2,s2);
+    dtostrf(T[1], 6, 2, s2);
     display.setTextSize(1);
-    display.setCursor(0,10);
+    display.setCursor(0, 10);
     display.write("2: ");
     display.write(s2);
 
     // T3
     char s3[6];
-    dtostrf(T[2],6,2,s3);
+    dtostrf(T[2], 6, 2, s3);
     display.setTextSize(1);
-    display.setCursor(0,20);
+    display.setCursor(0, 20);
     display.write("3: ");
     display.write(s3);
 
     // T4
     char s4[6];
-    dtostrf(T[3],6,2,s4);
+    dtostrf(T[3], 6, 2, s4);
     display.setTextSize(1);
-    display.setCursor(0,30);
+    display.setCursor(0, 30);
     display.write("4: ");
     display.write(s4);
 
     // T5
     char s5[6];
-    dtostrf(T[4],6,2,s5);
+    dtostrf(T[4], 6, 2, s5);
     display.setTextSize(1);
-    display.setCursor(0,40);
+    display.setCursor(0, 40);
     display.write("5: ");
     display.write(s5);
 
     // T6
     char s6[6];
-    dtostrf(T[5],6,2,s6);
+    dtostrf(T[5], 6, 2, s6);
     display.setTextSize(1);
-    display.setCursor(68,0);
+    display.setCursor(68, 0);
     display.write("6: ");
     display.write(s6);
 
     // T7
     char s7[6];
-    dtostrf(T[6],6,2,s7);
+    dtostrf(T[6], 6, 2, s7);
     display.setTextSize(1);
-    display.setCursor(68,10);
+    display.setCursor(68, 10);
     display.write("7: ");
     display.write(s7);
 
     // T8
     char s8[6];
-    dtostrf(T[7],6,2,s8);
+    dtostrf(T[7], 6, 2, s8);
     display.setTextSize(1);
-    display.setCursor(68,20);
+    display.setCursor(68, 20);
     display.write("8: ");
     display.write(s8);
 
     // T9
     char s9[6];
-    dtostrf(T[8],6,2,s9);
+    dtostrf(T[8], 6, 2, s9);
     display.setTextSize(1);
-    display.setCursor(68,30);
+    display.setCursor(68, 30);
     display.write("9: ");
     display.write(s9);
 
     // T10
     char s10[6];
-    dtostrf(T[9],6,2,s10);
+    dtostrf(T[9], 6, 2, s10);
     display.setTextSize(1);
-    display.setCursor(62,40);
+    display.setCursor(62, 40);
     display.write("10: ");
     display.write(s10);
 
     // SD card status
     display.setTextSize(1);
-    display.setCursor(0,57);
-//    display.write("SD ");
+    display.setCursor(0, 57);
+    //    display.write("SD ");
     // if SD present, show tick, otherwise show cross
-    if(err){
+    if (err) {
       display.write("No SD!");
-    }else{
+    } else {
       display.write("SD detected");
     }
 
     // if logging, show file name
-    if(samplingState && !err){
-      display.setCursor(73,57);
+    if (samplingState && !err) {
+      display.setCursor(73, 57);
       display.write(filename);
     }
 
