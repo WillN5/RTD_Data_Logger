@@ -7,6 +7,6 @@
 Log to SD card<br />
 Display real-time to screen<br />
 USB powered<br />
-(Battery power in development)<br />
+Battery power (in testing) <br />
 
 ![IMG_5728](https://user-images.githubusercontent.com/24661225/125773267-34314ec5-8a05-47a1-87b8-fa49799e6e67.jpeg)
